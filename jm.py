@@ -198,7 +198,7 @@ This also releases the lock and resets the job_servers to be an empty JobServer
 instance on the localhost.
 '''
         if not self._has_lock:
-            raise LockException('Cannot pickle cache without possessing lock.')
+            self._acquire_lock()
         pickle.dump(self.job_servers, open(self.cache, 'wb'))
         self.job_servers = dict(localhost=JobServer())
         self._release_lock()
