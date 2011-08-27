@@ -229,7 +229,7 @@ hostname: name of server.
         
 See also JobServer.auto_update.
 '''
-        self.job_server['localhost'].auto_update()
+        self.job_servers['localhost'].auto_update()
 
     def pretty_print(self, hosts=None, pattern=None):
         '''Print out list of jobs.
