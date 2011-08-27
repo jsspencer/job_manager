@@ -178,8 +178,6 @@ Only performed on the localhost JobServer.  See also Job.auto_update.
         if self.hostname == 'localhost':
             for job in self.jobs:
                 job.auto_update()
-            # TODO: discover if queueing system has jobs JobServer doesn't know
-            # about.
         else:
             print 'Not auto-updating jobs on host %s' % (self.hostname)
 
