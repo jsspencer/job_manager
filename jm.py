@@ -40,10 +40,11 @@ status: current status of job.  See JobStatus for defined statuses.  This must b
 submit: submit script file name.
 comment: further information regarding the job.
 
-Only id and path are required; all other attributes are optional.
+Only id, program and path are required; all other attributes are optional.
 '''
-    def __init__(self, id, path, input=None, output=None, status=None, submit=None, comment=None):
+    def __init__(self, id, program, path, input=None, output=None, status=None, submit=None, comment=None):
         self.id = id
+        self.program = program
         self.path = path
         self.input = input
         self.output = output
