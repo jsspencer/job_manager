@@ -3,6 +3,8 @@
 import os
 import os.path
 import pickle
+import re
+import subprocess
 import time
 
 ### Custom exceptions ###
@@ -64,14 +66,66 @@ Note that this assumes the job is running on the local computer.  Warning: if
 this condition is not met, then the job status will be incorrectly updated to
 finished.
 
+Currently only aware of the PBS queueing system.
+
 Only jobs which are currently held, queueing or running are updated.
 '''
         if self.status == JobStatus.held or self.status == JobStatus.queueing or self.status == JobStatus.running:
-            # TODO
-            # queueing?
-            # running?
-            # finished?
-            pass
+
+            # Check the queueing systems.
+            # To add a queueing system, add a dictionary to the list.
+            queues = [
+
+                        dict(
+                            command=["ps", "aux"],  # command to list all jobs
+                            job_column=1, # column of output which contains the job id field (0-indexed).
+                            status_column=7, # column of output which contains the status field.
+                            held=None, # string which indicates a held status (not used if None).
+                            queueing=None, # string which indicates a queueing status (not used if None).
+                            running=None, # string which indicates a running status (not used if None).
+                        ),
+                        dict(
+                            command=["qstat"],
+                            job_column=0,
+                            status_column=4,
+                            held='H',
+                            queueing='Q',
+                            running='R',
+                        ),
+                    ]
+
+            for queue in queues:
+                try:
+                    p = subprocess.Popen(queue['command'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                    (output, error) = p.communicate()
+                    if p.returncode == 0:
+                        found_job = False
+                        for line in output.splitlines():
+                            id = line.split()[queue['job_column']]
+                            stat = line.split()[queue['status_column']] 
+                            if re.match(str(self.id), id):
+                                # found job, update status
+                                found_job = True
+                                if not (queue['held'] and queue['queueing'] and queue['running']):
+                                    # don't know about status.  assume running.
+                                    self.status = JobStatus.running
+                                else:
+                                    if queue['held']:
+                                        if re.match(queue['held'], stat):
+                                            self.status = JobStatus.held
+                                    if queue['queueing']:
+                                        if re.match(queue['queueing'], stat):
+                                            self.status = JobStatus.queueing
+                                    if queue['running']:
+                                        if re.match(queue['running'], stat):
+                                            self.status = JobStatus.running
+                                break
+                        if not found_job:
+                            # Couldn't find job, assume it has finished.
+                            self.status = JobStatus.finished
+                except OSError:
+                    # command doesn't exists on this server---skip.
+                    pass
 
     def match(self, pattern):
         '''Test to see if the job description matches the supplied pattern.
