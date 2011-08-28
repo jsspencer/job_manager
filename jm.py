@@ -335,7 +335,7 @@ pattern are printed.  If pattern is None then all jobs are printed.
                 if not selected_jobs[host]:
                     selected_jobs.pop(host)
 
-        attrs = ['hostname', 'job_id', 'path', 'input_fname', 'output_fname', 'submit', 'status', 'comment']
+        attrs = ['hostname', 'index', 'job_id', 'path', 'input_fname', 'output_fname', 'submit', 'status', 'comment']
         lengths = dict((attr, len(attr)) for attr in attrs)
         for (host, jobs) in selected_jobs.iteritems():
             lengths['hostname'] = max(lengths['hostname'], len(host))
@@ -357,5 +357,8 @@ pattern are printed.  If pattern is None then all jobs are printed.
             for (host, jobs) in selected_jobs.iteritems():
                 for job in jobs:
                     output_dict = job.job_spec()
-                    output_dict['hostname'] = host
+                    output_dict.update((
+                        ('hostname', host),
+                        ('index', self.job_servers[host].jobs.index(job))
+                    ))
                     print fmt % output_dict
