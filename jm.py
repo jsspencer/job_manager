@@ -133,11 +133,14 @@ Only jobs which are currently held, queueing or running are updated.
 Parameters
 ----------
 
-# TODO: doc
+pattern: regular expression.  All attributes are tested (using re.search)
+against the pattern and if any match then True is returned.
 '''
+        matched = False
         if pattern:
-            # TODO: pattern matching
-            matched = True
+            for attr in ['id', 'program', 'path', 'input', 'output', 'status', 'submit', 'comment']:
+                if re.search(pattern, str(getattr(self, attr))):
+                    matched = True
         else:
             matched = True
         return matched
@@ -187,7 +190,9 @@ Only performed on the localhost JobServer.  See also Job.auto_update.
 Parameters
 ----------
 
-# TODO: doc
+pattern: regular expression.  All jobs are tested (using re.search)
+against the pattern and the list of matching jobs is returned.  If pattern is
+None then all jobs are returned.
 '''
         selected_jobs = []
         for job in self.jobs:
@@ -291,14 +296,15 @@ Parameters
 ----------
 
 hosts: list of hostnames.  If specified, print out only jobs on the specified servers.
-pattern: TODO.
+pattern: regular expression.  Only jobs which match the supplied
+pattern are printed.  If pattern is None then all jobs are printed.
 '''
-        jobs = []
+        selected_jobs = {}
         for (host, job_server) in self.job_servers.iteritems():
-            # Move to JobServer.pretty_print
             if not hosts or job_server.hostname in hosts:
-                jobs.extend(job_server.select(pattern))
-        for job in jobs:
+                selected_jobs[host] = job_server.select(pattern)
+        for (host, jobs) in selected_jobs.iteritems():
             # TODO: formatting
             # TODO: header
-            print job
+            if jobs:
+                print (host, jobs)
