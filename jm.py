@@ -1,23 +1,29 @@
-#!/usr/bin/env python
+'''Calculation manager.
+
+This module provides classes for managing collections of calculations.
+For persistant information it is best to interact via a JobCache instance.
+'''
 
 import os
 import os.path
 import pickle
 import re
 import subprocess
-import time
 
 ### Custom exceptions ###
 
-class UserException(Exception):
+class UserError(Exception):
+    '''Raised due to an error from user-input.'''
     pass
 
+
 class LockException(Exception):
+    '''Raised if a lock cannot be acquired.'''
     pass
 
 ### Cache classes ###
 
-class JobStatus:
+class JobStatus(object):
     '''enum-esque class for specifying the status of a job.
 
 Defined statuses: held, queueing, running, finished, analysed.'''
@@ -29,33 +35,35 @@ Defined statuses: held, queueing, running, finished, analysed.'''
 
 
 class Job:
-    '''Store of information regarding a calculation job.  Not all attributes are always applicable.
+    '''Store of information regarding a calculation job.
 
 Paramters
 ---------
 
-id: job id (e.g. pid or from queueing system)
+job_id: job id (e.g. pid or from queueing system)
 path: path to job directory
-input: input file name
-output: output file name
-status: current status of job.  See JobStatus for defined statuses.  This must be an attribute of JobStatus.
+input_fname: input file name
+output_fname: output file name
+status: current status of job.  See JobStatus for defined statuses.  This must
+be an attribute of JobStatus.
 submit: submit script file name.
 comment: further information regarding the job.
 
-Only id, program and path are required; all other attributes are optional.
+Only job_id, program and path are required.  All other attributes are optional.
+Not all attributes are always applicable.
 '''
-    def __init__(self, id, program, path, input=None, output=None, status=None, submit=None, comment=None):
-        self.id = id
+    def __init__(self, job_id, program, path, input_fname=None, output_fname=None, status=None, submit=None, comment=None):
+        self.job_id = job_id
         self.program = program
         self.path = path
-        self.input = input
-        self.output = output
+        self.input_fname = input_fname
+        self.output_fname = output_fname
         self.status = status
         self.submit = submit
         self.comment = comment
 
     def __repr__(self):
-        return (self.id, self.path, self.input, self.output, self.status, self.submit, self.comment).__repr__()
+        return (self.job_id, self.path, self.input_fname, self.output_fname, self.status, self.submit, self.comment).__repr__()
 
     def auto_update(self):
         '''Update status of job automatically.
@@ -70,55 +78,50 @@ Currently only aware of the PBS queueing system.
 
 Only jobs which are currently held, queueing or running are updated.
 '''
-        if self.status == JobStatus.held or self.status == JobStatus.queueing or self.status == JobStatus.running:
+        # Check the queueing systems.
+        # To add a queueing system, add a dictionary to the list.
+        queues = [
+            dict(
+                command=["ps", "aux"],  # command to list all jobs
+                job_column=1,  # column of output which contains the job id field (0-indexed).
+                status_column=7,  # column of output which contains the status field.
+                held=None,  # string which indicates a held status (not used if None).
+                queueing=None,  # string which indicates a queueing status (not used if None).
+                running=None,  # string which indicates a running status (not used if None).
+            ),
+            dict(
+                command=["qstat"],
+                job_column=0,
+                status_column=4,
+                held='H',
+                queueing='Q',
+                running='R',
+            ),
+        ]
 
-            # Check the queueing systems.
-            # To add a queueing system, add a dictionary to the list.
-            queues = [
-
-                        dict(
-                            command=["ps", "aux"],  # command to list all jobs
-                            job_column=1, # column of output which contains the job id field (0-indexed).
-                            status_column=7, # column of output which contains the status field.
-                            held=None, # string which indicates a held status (not used if None).
-                            queueing=None, # string which indicates a queueing status (not used if None).
-                            running=None, # string which indicates a running status (not used if None).
-                        ),
-                        dict(
-                            command=["qstat"],
-                            job_column=0,
-                            status_column=4,
-                            held='H',
-                            queueing='Q',
-                            running='R',
-                        ),
-                    ]
+        if self.status in (JobStatus.held, JobStatus.queueing, JobStatus.running):
 
             for queue in queues:
                 try:
-                    p = subprocess.Popen(queue['command'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                    (output, error) = p.communicate()
-                    if p.returncode == 0:
+                    queue_popen = subprocess.Popen(queue['command'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                    output = queue_popen.communicate()[0]
+                    if queue_popen.returncode == 0:
                         found_job = False
                         for line in output.splitlines():
-                            id = line.split()[queue['job_column']]
-                            stat = line.split()[queue['status_column']] 
-                            if re.match(str(self.id), id):
+                            job_id = line.split()[queue['job_column']]
+                            stat = line.split()[queue['status_column']]
+                            if re.match(str(self.job_id), job_id):
                                 # found job, update status
                                 found_job = True
                                 if not (queue['held'] and queue['queueing'] and queue['running']):
                                     # don't know about status.  assume running.
                                     self.status = JobStatus.running
-                                else:
-                                    if queue['held']:
-                                        if re.match(queue['held'], stat):
-                                            self.status = JobStatus.held
-                                    if queue['queueing']:
-                                        if re.match(queue['queueing'], stat):
-                                            self.status = JobStatus.queueing
-                                    if queue['running']:
-                                        if re.match(queue['running'], stat):
-                                            self.status = JobStatus.running
+                                elif queue['held'] and re.match(queue['held'], stat):
+                                    self.status = JobStatus.held
+                                elif queue['queueing'] and re.match(queue['queueing'], stat):
+                                    self.status = JobStatus.queueing
+                                elif queue['running'] and re.match(queue['running'], stat):
+                                    self.status = JobStatus.running
                                 break
                         if not found_job:
                             # Couldn't find job, assume it has finished.
@@ -138,7 +141,7 @@ against the pattern and if any match then True is returned.
 '''
         matched = False
         if pattern:
-            for attr in ['id', 'program', 'path', 'input', 'output', 'status', 'submit', 'comment']:
+            for attr in ['job_id', 'program', 'path', 'input_fname', 'output_fname', 'status', 'submit', 'comment']:
                 if re.search(pattern, str(getattr(self, attr))):
                     matched = True
         else:
@@ -175,7 +178,7 @@ job_desc: dictionary describing the job to be added.  See Job class for possible
 
     def auto_update(self):
         '''Automatically update the job status of all jobs.
-        
+
 Only performed on the localhost JobServer.  See also Job.auto_update.
 '''
         if self.hostname == 'localhost':
@@ -233,18 +236,31 @@ load: if true, load data from an existing cache file.
         return (self.cache, self.lock, self._has_lock, self.job_servers).__repr__()
 
     def _acquire_lock(self):
+        '''Acquire a lock on the cache file.
+
+This writes the pid of the current instance to the lock_file, which is only
+possible if the lock_file doesn't already exist.  Manipulating the job cache
+must be atomic in order to avoid race conditions, so one should always acquire
+the lock when loading data from the cache file.
+'''
         if os.path.exists(self.lock):
-            f = open(self.lock)
-            pid = f.read().strip()
-            f.close()
+            lock_file = open(self.lock)
+            pid = lock_file.read().strip()
+            lock_file.close()
             raise LockException('Cannot obtain lock file: %s; lock held by process: %s.' % (self.lock, pid))
         else:
-            f = open(self.lock, 'w')
-            f.write('%i' % os.getpid())
-            f.close()
+            lock_file = open(self.lock, 'w')
+            lock_file.write('%i' % os.getpid())
+            lock_file.close()
             self._has_lock = True
 
     def _release_lock(self):
+        '''Release the lock on the cache file.
+
+This simply deletes the lock file if the current instance holds the lock.  This
+should only be done once the cache has been dumped to file and the current
+instance is no longer manipulating the cache.
+'''
         if self._has_lock:
             os.remove(self.lock)
             self._has_lock = False
@@ -279,12 +295,12 @@ hostname: name of server.
 
 '''
         if hostname in self.job_servers:
-            raise UserException('Cannot add new server.  Hostname already exists: %s.' % (hostname))
+            raise UserError('Cannot add new server.  Hostname already exists: %s.' % (hostname))
         self.job_servers[hostname] = JobServer(hostname)
 
     def auto_update(self):
         '''Auto-update the status of the jobs on the localhost job server.
-        
+
 See also JobServer.auto_update.
 '''
         self.job_servers['localhost'].auto_update()
@@ -304,7 +320,7 @@ pattern are printed.  If pattern is None then all jobs are printed.
             if not hosts or job_server.hostname in hosts:
                 selected_jobs[host] = job_server.select(pattern)
         for (host, jobs) in selected_jobs.iteritems():
-            # TODO: formatting
-            # TODO: header
+            # formatting
+            # header
             if jobs:
                 print (host, jobs)
