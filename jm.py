@@ -148,6 +148,18 @@ against the pattern and if any match then True is returned.
             matched = True
         return matched
 
+    def job_spec(self):
+        '''Return a dictionary (a 'job spec') of the job attributes.'''
+        return dict(
+                     job_id=self.job_id,
+                     path=self.path,
+                     input_fname=self.input_fname,
+                     output_fname=self.output_fname,
+                     status=self.status,
+                     submit=self.submit,
+                     comment=self.comment,
+                   )
+
 
 class JobServer:
     '''Store jobs running on a server/computer.
@@ -319,8 +331,31 @@ pattern are printed.  If pattern is None then all jobs are printed.
         for (host, job_server) in self.job_servers.iteritems():
             if not hosts or job_server.hostname in hosts:
                 selected_jobs[host] = job_server.select(pattern)
+                # store only servers with jobs matching the pattern
+                if not selected_jobs[host]:
+                    selected_jobs.pop(host)
+
+        attrs = ['hostname', 'job_id', 'path', 'input_fname', 'output_fname', 'submit', 'status', 'comment']
+        lengths = dict((attr, len(attr)) for attr in attrs)
         for (host, jobs) in selected_jobs.iteritems():
-            # formatting
-            # header
-            if jobs:
-                print (host, jobs)
+            lengths['hostname'] = max(lengths['hostname'], len(host))
+            for job in jobs:
+                for (attr, val) in job.job_spec().iteritems():
+                    lengths[attr] = max(lengths[attr], len(str(val)))
+
+        if selected_jobs:
+            # if not an empty dict, then we have jobs to print.
+            # want output in a specific order.
+            fmt = ''
+            for attr in attrs:
+                fmt = '%s%%(%s)-%is  ' % (fmt, attr, lengths[attr])
+            header = dict((attr, attr) for attr in attrs)
+            print fmt % header
+            for attr in header.itervalues():
+                header[attr] = '-'*lengths[attr]
+            print fmt % header
+            for (host, jobs) in selected_jobs.iteritems():
+                for job in jobs:
+                    output_dict = job.job_spec()
+                    output_dict['hostname'] = host
+                    print fmt % output_dict
