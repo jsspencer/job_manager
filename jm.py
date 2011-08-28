@@ -4,10 +4,12 @@ This module provides classes for managing collections of calculations.
 For persistant information it is best to interact via a JobCache instance.
 '''
 
+import copy
 import os
 import os.path
 import pickle
 import re
+import time
 import subprocess
 
 ### Custom exceptions ###
@@ -61,9 +63,15 @@ Not all attributes are always applicable.
         self.status = status
         self.submit = submit
         self.comment = comment
+        # time since epoch job entry was modified.  useful for merging job caches.
+        self._timestamp = time.gmtime()
 
     def __repr__(self):
         return (self.job_id, self.path, self.input_fname, self.output_fname, self.status, self.submit, self.comment).__repr__()
+
+    def mtime(self):
+        '''Return the last time (in seconds since the epoch) that the job was modified.'''
+        return self._timestamp
 
     def auto_update(self):
         '''Update status of job automatically.
@@ -122,10 +130,12 @@ Only jobs which are currently held, queueing or running are updated.
                                     self.status = JobStatus.queueing
                                 elif queue['running'] and re.match(queue['running'], stat):
                                     self.status = JobStatus.running
+                                self._timestamp = time.gmtime()
                                 break
                         if not found_job:
                             # Couldn't find job, assume it has finished.
                             self.status = JobStatus.finished
+                            self._timestamp = time.gmtime()
                 except OSError:
                     # command doesn't exists on this server---skip.
                     pass
@@ -143,6 +153,7 @@ ignored.
         for (attr, val) in job_spec:
             if val:
                 setattr(self, attr, val)
+        self._timestamp = time.gmtime()
 
     def match(self, pattern):
         '''Test to see if the job description matches the supplied pattern.
@@ -266,6 +277,40 @@ against the pattern and matching jobs are modified.   Not used if None.
                 if job.match(pattern):
                     self.jobs[index].modify(job_spec)
 
+    def merge(self, other):
+        '''Merge data from another JobServer.
+
+If a job in the other JobServer has the same job_id as a job in the current
+instance and has a later modification time, then it is copied across.
+If a job in the other JobServer does not have the same job_id as any job in the
+current instance, then it is copied across.
+
+Note that the hostname of the other JobServer is not checked.
+
+The job_id of the Job instance is treated as a unique identifier.  This is
+usually true on a given queueing system but is not guaranteed with running
+local jobs (where the job_id is taken from ps).  Care should thus be taken when
+merging jobs from localhost JobServers and from merging jobs from two different
+servers (which should instead be grouped together using a JobCache instance).
+
+Parameters
+----------
+
+other: another instance of JobServer.
+'''
+        # I don't pretend to be efficient here, but we should not be handling MB of data here!
+        for other_job in other.jobs:
+            found = False
+            for job in self.jobs:
+                if other_job.job_id == job.job_id:
+                    found = True
+                    if other_job.mtime() > job.mtime():
+                        job.modify(other_job.job_spec())
+                    break
+            if not found:
+                # new job.  add.
+                self.jobs.append(copy.deepcopy(other_job))
+
 class JobCache:
     '''Store, manipulate, load and save multiple JobServer instances.
 
@@ -366,6 +411,36 @@ hostname: name of server.
 See also JobServer.auto_update.
 '''
         self.job_servers['localhost'].auto_update()
+
+    def merge(self, other, other_hostname):
+        '''Merge data from another JobCache.
+
+Each JobServer in other JobCache is merged with the corresponding JobServer in
+the current instance.  JobServers are matched by the hostname. If a JobServer
+exists in the other JobCache and in the current instance, then they are merged
+using JobServer.merge, otherwise it is simply copied to the current instance.
+(Note that the localhost hostname of the other JobCache is replaced with
+other_hostname to avoid unintended nameclashes.)
+
+Parameters
+----------
+
+other: another instance of JobCache.
+other_hostname: hostname of the other JobCache.  Used instead of localhost when
+transferring the localhost JobServer from the other JobCache to the current
+instance.
+'''
+        # treat localhost separately---want to save it to a different name.
+        other['localhost'].hostname = other_hostname
+        for job_server in other.job_servers.itervalues():
+            if job_server.hostname in self.job_servers:
+                # have already got a job_server of the same name. 
+                self.job_servers[job_server.hostname].merge(job_server)
+            else:
+                # simple---host doesn't exist.  just copy the job server directly...
+                self.job_servers[job_server.hostname] = copy.deepcopy(job_server)
+        # undo local modification to localhost on the other cache.
+        other['localhost'].hostname = 'localhost'
 
     def pretty_print(self, hosts=None, pattern=None):
         '''Print out list of jobs.
