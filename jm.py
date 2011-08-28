@@ -130,6 +130,20 @@ Only jobs which are currently held, queueing or running are updated.
                     # command doesn't exists on this server---skip.
                     pass
 
+    def modify(self, job_spec):
+        '''Modify the job description.
+
+Parameters
+----------
+
+job_spec: dictionary with Job attributes as keys associated with new values.
+All attributes set at initialisation can be changed.  Keys with null values are
+ignored.
+'''
+        for (attr, val) in job_spec:
+            if val:
+                setattr(self, attr, val)
+
     def match(self, pattern):
         '''Test to see if the job description matches the supplied pattern.
 
@@ -215,6 +229,42 @@ None then all jobs are returned.
                 selected_jobs.append(job)
         return selected_jobs
 
+    def delete(self, indices=None, pattern=None):
+        '''
+Parameters
+----------
+
+indices: iterable containing indices of Job instances in the jobs
+list to delete.
+pattern: regular expression.  All jobs are tested (using re.search)
+against the pattern and matching jobs are deleted.  Not used if None.
+'''
+        if indices:
+            deleted = 0
+            for index in indices:
+                self.jobs.pop(index-deleted)
+                deleted += 1
+        if pattern:
+            for job in self.select(pattern):
+                self.jobs.remove(job)
+
+    def modify(self, job_spec, indices=None, pattern=None):
+        '''
+Parameters
+----------
+
+indices: iterable containing indices of Job instances in the jobs
+list to delete.
+pattern: regular expression.  All jobs are tested (using re.search)
+against the pattern and matching jobs are modified.   Not used if None.
+'''
+        if indices:
+            for index in indices:
+                self.jobs[index].modify(job_spec)
+        if pattern:
+            for (index, job) in enumerate(self.jobs):
+                if job.match(pattern):
+                    self.jobs[index].modify(job_spec)
 
 class JobCache:
     '''Store, manipulate, load and save multiple JobServer instances.
