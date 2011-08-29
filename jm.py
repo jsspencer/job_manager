@@ -39,9 +39,6 @@ Defined statuses: held, queueing, running, finished, analysed.'''
 class Job:
     '''Store of information regarding a calculation job.
 
-Paramters
----------
-
 job_id: job id (e.g. pid or from queueing system)
 path: path to job directory
 input_fname: input file name
@@ -143,9 +140,6 @@ Only jobs which are currently held, queueing or running are updated.
     def modify(self, job_spec):
         '''Modify the job description.
 
-Parameters
-----------
-
 job_spec: dictionary with Job attributes as keys associated with new values.
 All attributes set at initialisation can be changed.  Keys with null values are
 ignored.
@@ -157,9 +151,6 @@ ignored.
 
     def match(self, pattern):
         '''Test to see if the job description matches the supplied pattern.
-
-Parameters
-----------
 
 pattern: regular expression.  All attributes are tested (using re.search)
 against the pattern and if any match then True is returned.
@@ -189,9 +180,6 @@ against the pattern and if any match then True is returned.
 class JobServer:
     '''Store jobs running on a server/computer.
 
-Parameters
-----------
-
 hostname: name of computer running the jobs.  Default: localhost.  localhost is
 treated as a special case and is assumed to be the computer on which this
 instance of jm is running.
@@ -205,9 +193,6 @@ instance of jm is running.
 
     def add(self, job_desc):
         '''Add a job to the list of jobs running on the server.
-
-Parameters
-----------
 
 job_desc: dictionary describing the job to be added.  See Job class for possible fields.
 '''
@@ -227,9 +212,6 @@ Only performed on the localhost JobServer.  See also Job.auto_update.
     def select(self, pattern):
         '''Select a subset of jobs from the server which match the supplied pattern.
 
-Parameters
-----------
-
 pattern: regular expression.  All jobs are tested (using re.search)
 against the pattern and the list of matching jobs is returned.  If pattern is
 None then all jobs are returned.
@@ -241,9 +223,7 @@ None then all jobs are returned.
         return selected_jobs
 
     def delete(self, indices=None, pattern=None):
-        '''
-Parameters
-----------
+        '''Delete a selected subset of jobs.
 
 indices: iterable containing indices of Job instances in the jobs
 list to delete.
@@ -260,9 +240,7 @@ against the pattern and matching jobs are deleted.  Not used if None.
                 self.jobs.remove(job)
 
     def modify(self, job_spec, indices=None, pattern=None):
-        '''
-Parameters
-----------
+        '''Modify a selected subset of jobs.
 
 indices: iterable containing indices of Job instances in the jobs
 list to delete.
@@ -293,9 +271,6 @@ local jobs (where the job_id is taken from ps).  Care should thus be taken when
 merging jobs from localhost JobServers and from merging jobs from two different
 servers (which should instead be grouped together using a JobCache instance).
 
-Parameters
-----------
-
 other: another instance of JobServer.
 '''
         # I don't pretend to be efficient here, but we should not be handling MB of data here!
@@ -315,9 +290,6 @@ class JobCache:
     '''Store, manipulate, load and save multiple JobServer instances.
 
 By default a new (empty) JobServer instance is created on localhost.
-
-Parameters
-----------
 
 cache: path to a file in which the job data can be stored and retrieved.  Only
 one instance can manipulate job data stored in a cache at a time, so a lock is
@@ -395,9 +367,6 @@ This action acquires the lock.'''
     def add_server(self, hostname):
         '''Add a new JobServer instance.
 
-Parameters
-----------
-
 hostname: name of server.
 
 '''
@@ -422,9 +391,6 @@ using JobServer.merge, otherwise it is simply copied to the current instance.
 (Note that the localhost hostname of the other JobCache is replaced with
 other_hostname to avoid unintended nameclashes.)
 
-Parameters
-----------
-
 other: another instance of JobCache.
 other_hostname: hostname of the other JobCache.  Used instead of localhost when
 transferring the localhost JobServer from the other JobCache to the current
@@ -444,9 +410,6 @@ instance.
 
     def pretty_print(self, hosts=None, pattern=None):
         '''Print out list of jobs.
-
-Parameters
-----------
 
 hosts: list of hostnames.  If specified, print out only jobs on the specified servers.
 pattern: regular expression.  Only jobs which match the supplied
