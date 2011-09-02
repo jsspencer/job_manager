@@ -79,7 +79,7 @@ Note that this assumes the job is running on the local computer.  Warning: if
 this condition is not met, then the job status will be incorrectly updated to
 finished.
 
-Currently only aware of the PBS queueing system.
+Currently only aware of the PBS and LoadLeveler queueing systems.
 
 Only jobs which are currently held, queueing or running are updated.
 '''
@@ -100,6 +100,14 @@ Only jobs which are currently held, queueing or running are updated.
                 status_column=4,
                 held='H',
                 queueing='Q',
+                running='R',
+            ),
+            dict(
+                command=["llq"],
+                job_column=0,
+                status_column=3,
+                held='H|NQ|S',
+                queueing='I',
                 running='R',
             ),
         ]
