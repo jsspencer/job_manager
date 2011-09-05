@@ -1,0 +1,62 @@
+# bash completion for jm (job_manager command-line interface)
+
+_jm() 
+{
+
+    local cur opts subcommand subcommands word job_desc REPLY JOBREPLY
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+
+    subcommands_list=(add modify delete update daemon merge list)
+    subcommands="add modify delete update daemon merge list"
+    opts="--help --cache"
+    job_desc="job_id= program= path= input_fname= output_fname= status= submit= comment="
+
+    subcommand=""
+    for word in "${COMP_WORDS[@]}"; do
+        for sc in "${subcommands_list[@]}"; do
+            [[ "${sc}" == "${word}" ]] && subcommand=${sc}
+        done
+    done
+
+    case "${subcommand}" in
+        add)
+            opts="${opts} --server ${job_desc}"
+            if [[ "${cur}" != -* && x"${cur}" != "x" ]]; then
+                COMPREPLY=($(compgen -W "${job_desc}" -- ${cur}))
+                compopt -o nospace
+                return 0
+            fi
+            ;;
+        modify)
+            opts="${opts} --server --pattern --index ${job_desc}"
+            if [[ "${cur}" != -* && x"${cur}" != "x" ]]; then
+                COMPREPLY=($(compgen -W "${job_desc}" -- ${cur}))
+                compopt -o nospace
+                return 0
+            fi
+            ;;
+        delete)
+            opts="${opts} --server --pattern --index"
+            ;;
+        update)
+            ;;
+        daemon)
+            ;;
+        merge)
+            ;;
+        list)
+            opts="${opts} --server --pattern"
+            ;;
+        *)
+            opts="${subcommands} ${opts}"
+            ;;
+    esac
+
+    COMPREPLY=($(compgen -W "${opts}" -- ${cur}))  
+    return 0
+
+}
+
+complete -F _jm jm
+
