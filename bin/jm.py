@@ -1,19 +1,49 @@
 #!/usr/bin/python
-'''jm
+'''
+Synopsis
+--------
 
-to do: usage documentation
+jm.py add [-c | --cache] [-s | --server] <job_description>
 
-cache: Cache filename containing JobCache data (created if not already present).
-args: list of arguments.  Optional arguments are --server=SERVER and
---pattern=PATTERN.  If server is given, then only jobs on the specified
-JobServer are printed.  If a pattern is given, then only jobs matching that
-regular expression are printed.
+jm.py modify [-c | --cache] [-s | --server] [-i | --index] [-p | --pattern] <job_description>
+
+jm.py delete [-c | --cache] [-s | --server] [-i | --index] [-p | --pattern]
+
+jm.py list [-c | --cache] [-s | --server] [-p | --pattern]
+
+jm.py update [-c | --cache]  
+
+jm.py daemon [-c | --cache]  
+
+jm.py merge [-c | --cache] <[[user@]remote_host:]remote_cache> [remote_hostname]
+
+Description
+-----------
+
+Commands
+--------
+
+Options
+-------
+
+Examples
+--------
 '''
 
 import job_manager
 import optparse
+import os
+import re
 import sys
+import tempfile
 import time
+
+# optional paramiko functionality
+try:
+    import paramiko
+    HAVE_PARAMIKO = True
+except ImportError:
+    HAVE_PARAMIKO = False
 
 ### parsers ###
 
@@ -75,14 +105,22 @@ Values not set default to None.
                      comment=None,
                    )
 
-    for arg in job_desc_list:
-        if '=' not in arg:
-            raise job_manager.UserError('Do not understand argument: %s' % (arg))
-        (option, value) = arg.split('=')
-        if option in job_desc:
-            job_desc[option] = value
+    option = job_desc_list[0][:-1]
+    value = ''
+    if option not in job_desc:
+        raise job_manager.UserError('Invalid job descriptor: %s' % (option))
+    for word in job_desc_list[1:]:
+        if word[:-1] in job_desc and word[-1] == ':':
+            job_desc[option] = value.strip() # remove trailing space
+            option = word[:-1]
+            value = ''
         else:
-            raise job_manager.UserError('Invalid job descriptor: %s' % (option))
+            value = '%s%s ' % (value, word)
+    # add last option
+    if option in job_desc:
+        job_desc[option] = value.strip()
+    else:
+        raise job_manager.UserError('Invalid job descriptor: %s' % (option))
 
     return job_desc
 
@@ -125,6 +163,7 @@ For full usage, see top-level __doc__.
             raise job_manager.UserError('%s requires a second cache file.' % (subcommand))
         elif len(args) == 1:
             options.remote_cache = args[0]
+            options.remote_server = None
         else:
             options.remote_cache = args[0]
             options.remote_server = args[1]
@@ -149,7 +188,7 @@ For full usage, see top-level __doc__.
     job_cache.dump()
 
 def delete(options):
-    '''Add a job.
+    '''Delete a job.
 
 options: optparse.Values instance as returned by option_parser.
 
@@ -169,7 +208,6 @@ options: optparse.Values instance as returned by option_parser.
 For full usage, see top-level __doc__.
 '''
 
-    print 'modify', options.index, options.pattern, options.server, options.job_desc
     job_cache = job_manager.JobCache(options.cache, load=True)
     for server in options.server:
         job_cache.job_servers[server].modify(options.job_desc, options.index, options.pattern)
@@ -195,12 +233,43 @@ options: optparse.Values instance as returned by option_parser.
 For full usage, see top-level __doc__.
 '''
 
+    tmp_cache = None
+    if re.match('.*?(.*?):', options.remote_cache):
+        # a cache on a remote server has been provided
+        if HAVE_PARAMIKO:
+            ssh = paramiko.SSHClient()
+            ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            remotem = re.match('(.*?)@(.*?):(.*)', options.remote_cache) 
+            if remotem:
+                user = remotem.group(1)
+                host = remotem.group(2)
+                remote_file = remotem.group(3)
+                ssh.connect(host, username=user)
+            else:
+                remotem = re.match('(.*?):(.*)', options.remote_cache) 
+                host = remotem.group(1)
+                remote_file = remotem.group(2)
+                ssh.connect(host)
+            if not options.remote_server:
+                options.remote_server = host
+            sftp = ssh.open_sftp()
+            tmp_cache = tempfile.NamedTemporaryFile(delete=False)
+            tmp_cache.close()
+            options.remote_cache = tmp_cache.name
+            sftp.get(remote_file, options.remote_cache)
+            sftp.close()
+            ssh.close()
+        else:
+            raise job_manager.UserError('Cannot obtain remote cache files without paramiko installed.')
+
     job_cache = job_manager.JobCache(options.cache, load=True)
     job_cache_remote = job_manager.JobCache(options.remote_cache, load=True)
 
     job_cache.merge(job_cache_remote, options.remote_server)
 
     job_cache.dump()
+    if tmp_cache:
+        os.remove(tmp_cache.name)
 
 def daemon(options):
     '''Auto-update status of any queueing or running jobs once a minute.

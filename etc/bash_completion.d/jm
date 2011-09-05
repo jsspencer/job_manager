@@ -3,14 +3,15 @@
 _jm() 
 {
 
-    local cur opts subcommand subcommands word job_desc REPLY JOBREPLY
+    local cur prev opts subcommand subcommands word job_desc REPLY JOBREPLY
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-2]}${COMP_WORDS[COMP_CWORD-1]}"
 
     subcommands_list=(add modify delete update daemon merge list)
     subcommands="add modify delete update daemon merge list"
     opts="--help --cache"
-    job_desc="job_id= program= path= input_fname= output_fname= status= submit= comment="
+    job_desc="job_id: program: path: input_fname: output_fname: status: submit: comment:"
 
     subcommand=""
     for word in "${COMP_WORDS[@]}"; do
@@ -21,20 +22,26 @@ _jm()
 
     case "${subcommand}" in
         add)
-            opts="${opts} --server ${job_desc}"
-            if [[ "${cur}" != -* && x"${cur}" != "x" ]]; then
-                COMPREPLY=($(compgen -W "${job_desc}" -- ${cur}))
-                compopt -o nospace
+            if [[ "${prev}" == "status:" ]]; then
+                COMPREPLY=($(compgen -W "unknown held queueing running finished analysed" -- ${cur}))
                 return 0
             fi
+            if [[ "${cur}" != -* && x"${cur}" != "x" ]]; then
+                COMPREPLY=($(compgen -W "${job_desc}" -- ${cur}))
+                return 0
+            fi
+            opts="${opts} --server ${job_desc}"
             ;;
         modify)
-            opts="${opts} --server --pattern --index ${job_desc}"
-            if [[ "${cur}" != -* && x"${cur}" != "x" ]]; then
-                COMPREPLY=($(compgen -W "${job_desc}" -- ${cur}))
-                compopt -o nospace
+            if [[ "${prev}" == "status:" ]]; then
+                COMPREPLY=($(compgen -W "unknown held queueing running finished analysed" -- ${cur}))
                 return 0
             fi
+            if [[ "${cur}" != -* && x"${cur}" != "x" ]]; then
+                COMPREPLY=($(compgen -W "${job_desc}" -- ${cur}))
+                return 0
+            fi
+            opts="${opts} --server --pattern --index ${job_desc}"
             ;;
         delete)
             opts="${opts} --server --pattern --index"
@@ -58,5 +65,5 @@ _jm()
 
 }
 
-complete -F _jm jm
-
+complete -F _jm jm.py
+compopt -o bashdefault -o default +o dirnames +o filenames +o nospace +o plusdirs jm.py
