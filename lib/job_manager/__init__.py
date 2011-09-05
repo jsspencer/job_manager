@@ -29,6 +29,7 @@ class JobStatus(object):
     '''enum-esque class for specifying the status of a job.
 
 Defined statuses: held, queueing, running, finished, analysed.'''
+    unknown = 'unknown'
     held = 'held'
     queueing = 'queueing'
     running = 'running'
@@ -40,6 +41,7 @@ class Job:
     '''Store of information regarding a calculation job.
 
 job_id: job id (e.g. pid or from queueing system)
+program: program being executed
 path: path to job directory
 input_fname: input file name
 output_fname: output file name
@@ -62,6 +64,9 @@ Not all attributes are always applicable.
         self.comment = comment
         # time since epoch job entry was modified.  useful for merging job caches.
         self._timestamp = time.gmtime()
+
+        if not self.status:
+            self.status = JobStatus.unknown
 
     def __repr__(self):
         return (self.job_id, self.path, self.input_fname, self.output_fname, self.status, self.submit, self.comment).__repr__()
@@ -112,7 +117,7 @@ Only jobs which are currently held, queueing or running are updated.
             ),
         ]
 
-        if self.status in (JobStatus.held, JobStatus.queueing, JobStatus.running):
+        if self.status in (JobStatus.unknown, JobStatus.held, JobStatus.queueing, JobStatus.running):
 
             for queue in queues:
                 try:
@@ -152,7 +157,7 @@ job_spec: dictionary with Job attributes as keys associated with new values.
 All attributes set at initialisation can be changed.  Keys with null values are
 ignored.
 '''
-        for (attr, val) in job_spec:
+        for (attr, val) in job_spec.iteritems():
             if val:
                 setattr(self, attr, val)
         self._timestamp = time.gmtime()
@@ -177,6 +182,7 @@ against the pattern and if any match then True is returned.
         return dict(
                      job_id=self.job_id,
                      path=self.path,
+                     program=self.program,
                      input_fname=self.input_fname,
                      output_fname=self.output_fname,
                      status=self.status,
@@ -308,7 +314,10 @@ load: if true, load data from an existing cache file.
 '''
     def __init__(self, cache, load=False):
         self.job_servers = dict(localhost=JobServer())
-        self.cache = os.path.expanduser(cache)
+        cache = os.path.expanduser(cache)
+        cache = os.path.expandvars(cache)
+        cache = os.path.abspath(cache)
+        self.cache = os.path.normpath(cache)
         if not os.path.isdir(os.path.dirname(self.cache)):
             os.makedirs(os.path.dirname(self.cache))
         self.lock = '%s.lock' % (self.cache)
@@ -405,7 +414,7 @@ transferring the localhost JobServer from the other JobCache to the current
 instance.
 '''
         # treat localhost separately---want to save it to a different name.
-        other['localhost'].hostname = other_hostname
+        other.job_servers['localhost'].hostname = other_hostname
         for job_server in other.job_servers.itervalues():
             if job_server.hostname in self.job_servers:
                 # have already got a job_server of the same name. 
@@ -414,7 +423,7 @@ instance.
                 # simple---host doesn't exist.  just copy the job server directly...
                 self.job_servers[job_server.hostname] = copy.deepcopy(job_server)
         # undo local modification to localhost on the other cache.
-        other['localhost'].hostname = 'localhost'
+        other.job_servers['localhost'].hostname = 'localhost'
 
     def pretty_print(self, hosts=None, pattern=None):
         '''Print out list of jobs.
@@ -431,13 +440,22 @@ pattern are printed.  If pattern is None then all jobs are printed.
                 if not selected_jobs[host]:
                     selected_jobs.pop(host)
 
-        attrs = ['hostname', 'index', 'job_id', 'path', 'input_fname', 'output_fname', 'submit', 'status', 'comment']
+        # want output to be ordered: use list.
+        attrs = ['hostname', 'index', 'job_id', 'program', 'path', 'input_fname', 'output_fname', 'submit', 'status', 'comment']
         lengths = dict((attr, len(attr)) for attr in attrs)
+        used = dict((attr, None) for attr in attrs)
         for (host, jobs) in selected_jobs.iteritems():
             lengths['hostname'] = max(lengths['hostname'], len(host))
             for job in jobs:
                 for (attr, val) in job.job_spec().iteritems():
                     lengths[attr] = max(lengths[attr], len(str(val)))
+                    used[attr] = used[attr] or val
+
+        # don't output unused fields
+        for (attr, val) in used.iteritems():
+            if attr not in ['hostname', 'index'] and not val:
+                attrs.remove(attr)
+                lengths.pop(attr)
 
         if selected_jobs:
             # if not an empty dict, then we have jobs to print.
@@ -445,11 +463,8 @@ pattern are printed.  If pattern is None then all jobs are printed.
             fmt = ''
             for attr in attrs:
                 fmt = '%s%%(%s)-%is  ' % (fmt, attr, lengths[attr])
-            header = dict((attr, attr) for attr in attrs)
-            print fmt % header
-            for attr in header.itervalues():
-                header[attr] = '-'*lengths[attr]
-            print fmt % header
+            print fmt % dict((attr, attr) for attr in attrs)
+            print fmt % dict((attr, '-'*lengths[attr]) for attr in attrs)
             for (host, jobs) in selected_jobs.iteritems():
                 for job in jobs:
                     output_dict = job.job_spec()
