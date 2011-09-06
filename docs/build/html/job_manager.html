@@ -1,0 +1,293 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>job_manager &mdash; Job Manager v0.1 documentation</title>
+    <link rel="stylesheet" href="_static/haiku-mod.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/print.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/theme_extras.js"></script>
+    <link rel="top" title="Job Manager v0.1 documentation" href="index.html" />
+    <link rel="next" title="License" href="license.html" />
+    <link rel="prev" title="jm.py" href="jm.html" /> 
+  </head>
+  <body>
+      <div class="header"><h1 class="heading"><a href="index.html">
+          <span>Job Manager v0.1 documentation</span></a></h1>
+        <h2 class="heading"><span>job_manager</span></h2>
+      </div>
+      <div class="topnav">
+      
+        <p>
+        «&#160;&#160;<a href="jm.html">jm.py</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="license.html">License</a>&#160;&#160;»
+        </p>
+
+      </div>
+      <div class="content">
+        
+        
+  <div class="section" id="module-job_manager">
+<span id="job-manager"></span><h1>job_manager<a class="headerlink" href="#module-job_manager" title="Permalink to this headline">¶</a></h1>
+<p>Calculation manager.</p>
+<p>This module provides classes for managing collections of calculations.
+For persistant information it is best to interact via a JobCache instance.</p>
+<dl class="class">
+<dt id="job_manager.Job">
+<em class="property">class </em><tt class="descclassname">job_manager.</tt><tt class="descname">Job</tt><big>(</big><em>job_id</em>, <em>program</em>, <em>path</em>, <em>input_fname=None</em>, <em>output_fname=None</em>, <em>status=None</em>, <em>submit=None</em>, <em>comment=None</em><big>)</big><a class="headerlink" href="#job_manager.Job" title="Permalink to this definition">¶</a></dt>
+<dd><p>Store of information regarding a calculation job.</p>
+<p>job_id: job id (e.g. pid or from queueing system)
+program: program being executed
+path: path to job directory
+input_fname: input file name
+output_fname: output file name
+status: current status of job.  See JobStatus for defined statuses.  This must
+be an attribute of JobStatus.
+submit: submit script file name.
+comment: further information regarding the job.</p>
+<p>Only job_id, program and path are required.  All other attributes are optional.
+Not all attributes are always applicable.</p>
+<dl class="method">
+<dt id="job_manager.Job.auto_update">
+<tt class="descname">auto_update</tt><big>(</big><big>)</big><a class="headerlink" href="#job_manager.Job.auto_update" title="Permalink to this definition">¶</a></dt>
+<dd><p>Update status of job automatically.</p>
+<p>This inspects the output from ps and any queueing system to discover if the
+status of the job has changed (e.g. if the job has started or has finished).
+Note that this assumes the job is running on the local computer.  Warning: if
+this condition is not met, then the job status will be incorrectly updated to
+finished.</p>
+<p>Currently only aware of the PBS and LoadLeveler queueing systems.</p>
+<p>Only jobs which are currently held, queueing or running are updated.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="job_manager.Job.job_spec">
+<tt class="descname">job_spec</tt><big>(</big><big>)</big><a class="headerlink" href="#job_manager.Job.job_spec" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a dictionary (a &#8216;job spec&#8217;) of the job attributes.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="job_manager.Job.match">
+<tt class="descname">match</tt><big>(</big><em>pattern</em><big>)</big><a class="headerlink" href="#job_manager.Job.match" title="Permalink to this definition">¶</a></dt>
+<dd><p>Test to see if the job description matches the supplied pattern.</p>
+<p>pattern: regular expression.  All attributes are tested (using re.search)
+against the pattern and if any match then True is returned.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="job_manager.Job.modify">
+<tt class="descname">modify</tt><big>(</big><em>job_spec</em><big>)</big><a class="headerlink" href="#job_manager.Job.modify" title="Permalink to this definition">¶</a></dt>
+<dd><p>Modify the job description.</p>
+<p>job_spec: dictionary with Job attributes as keys associated with new values.
+All attributes set at initialisation can be changed.  Keys with null values are
+ignored.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="job_manager.Job.mtime">
+<tt class="descname">mtime</tt><big>(</big><big>)</big><a class="headerlink" href="#job_manager.Job.mtime" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the last time (in seconds since the epoch) that the job was modified.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="job_manager.JobCache">
+<em class="property">class </em><tt class="descclassname">job_manager.</tt><tt class="descname">JobCache</tt><big>(</big><em>cache</em>, <em>load=False</em><big>)</big><a class="headerlink" href="#job_manager.JobCache" title="Permalink to this definition">¶</a></dt>
+<dd><p>Store, manipulate, load and save multiple JobServer instances.</p>
+<p>By default a new (empty) JobServer instance is created on localhost.</p>
+<p>cache: path to a file in which the job data can be stored and retrieved.  Only
+one instance can manipulate job data stored in a cache at a time, so a lock is
+acquired when a cache is read and released only when the cache dumped out to
+the cache.  The directory for the cache file is created if it doesn&#8217;t already
+exist.
+load: if true, load data from an existing cache file.</p>
+<dl class="method">
+<dt id="job_manager.JobCache.add_server">
+<tt class="descname">add_server</tt><big>(</big><em>hostname</em><big>)</big><a class="headerlink" href="#job_manager.JobCache.add_server" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a new JobServer instance.</p>
+<p>hostname: name of server.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="job_manager.JobCache.auto_update">
+<tt class="descname">auto_update</tt><big>(</big><big>)</big><a class="headerlink" href="#job_manager.JobCache.auto_update" title="Permalink to this definition">¶</a></dt>
+<dd><p>Auto-update the status of the jobs on the localhost job server.</p>
+<p>See also JobServer.auto_update.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="job_manager.JobCache.dump">
+<tt class="descname">dump</tt><big>(</big><big>)</big><a class="headerlink" href="#job_manager.JobCache.dump" title="Permalink to this definition">¶</a></dt>
+<dd><p>Dump job_servers data to the cache file.</p>
+<p>This also releases the lock and resets the job_servers to be an empty JobServer
+instance on the localhost.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="job_manager.JobCache.load">
+<tt class="descname">load</tt><big>(</big><big>)</big><a class="headerlink" href="#job_manager.JobCache.load" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read in the job_servers data from the cache file.</p>
+<p>This action acquires the lock.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="job_manager.JobCache.merge">
+<tt class="descname">merge</tt><big>(</big><em>other</em>, <em>other_hostname</em><big>)</big><a class="headerlink" href="#job_manager.JobCache.merge" title="Permalink to this definition">¶</a></dt>
+<dd><p>Merge data from another JobCache.</p>
+<p>Each JobServer in other JobCache is merged with the corresponding JobServer in
+the current instance.  JobServers are matched by the hostname. If a JobServer
+exists in the other JobCache and in the current instance, then they are merged
+using JobServer.merge, otherwise it is simply copied to the current instance.
+(Note that the localhost hostname of the other JobCache is replaced with
+other_hostname to avoid unintended nameclashes.)</p>
+<p>other: another instance of JobCache.
+other_hostname: hostname of the other JobCache.  Used instead of localhost when
+transferring the localhost JobServer from the other JobCache to the current
+instance.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="job_manager.JobCache.pretty_print">
+<tt class="descname">pretty_print</tt><big>(</big><em>hosts=None</em>, <em>pattern=None</em><big>)</big><a class="headerlink" href="#job_manager.JobCache.pretty_print" title="Permalink to this definition">¶</a></dt>
+<dd><p>Print out list of jobs.</p>
+<p>hosts: list of hostnames.  If specified, print out only jobs on the specified servers.
+pattern: regular expression.  Only jobs which match the supplied
+pattern are printed.  If pattern is None then all jobs are printed.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="job_manager.JobServer">
+<em class="property">class </em><tt class="descclassname">job_manager.</tt><tt class="descname">JobServer</tt><big>(</big><em>hostname='localhost'</em><big>)</big><a class="headerlink" href="#job_manager.JobServer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Store jobs running on a server/computer.</p>
+<p>hostname: name of computer running the jobs.  Default: localhost.  localhost is
+treated as a special case and is assumed to be the computer on which this
+instance of jm is running.</p>
+<dl class="method">
+<dt id="job_manager.JobServer.add">
+<tt class="descname">add</tt><big>(</big><em>job_desc</em><big>)</big><a class="headerlink" href="#job_manager.JobServer.add" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a job to the list of jobs running on the server.</p>
+<p>job_desc: dictionary describing the job to be added.  See Job class for possible fields.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="job_manager.JobServer.auto_update">
+<tt class="descname">auto_update</tt><big>(</big><big>)</big><a class="headerlink" href="#job_manager.JobServer.auto_update" title="Permalink to this definition">¶</a></dt>
+<dd><p>Automatically update the job status of all jobs.</p>
+<p>Only performed on the localhost JobServer.  See also Job.auto_update.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="job_manager.JobServer.delete">
+<tt class="descname">delete</tt><big>(</big><em>indices=None</em>, <em>pattern=None</em><big>)</big><a class="headerlink" href="#job_manager.JobServer.delete" title="Permalink to this definition">¶</a></dt>
+<dd><p>Delete a selected subset of jobs.</p>
+<p>indices: iterable containing indices of Job instances in the jobs
+list to delete.
+pattern: regular expression.  All jobs are tested (using re.search)
+against the pattern and matching jobs are deleted.  Not used if None.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="job_manager.JobServer.merge">
+<tt class="descname">merge</tt><big>(</big><em>other</em><big>)</big><a class="headerlink" href="#job_manager.JobServer.merge" title="Permalink to this definition">¶</a></dt>
+<dd><p>Merge data from another JobServer.</p>
+<p>If a job in the other JobServer has the same job_id as a job in the current
+instance and has a later modification time, then it is copied across.
+If a job in the other JobServer does not have the same job_id as any job in the
+current instance, then it is copied across.</p>
+<p>Note that the hostname of the other JobServer is not checked.</p>
+<p>The job_id of the Job instance is treated as a unique identifier.  This is
+usually true on a given queueing system but is not guaranteed with running
+local jobs (where the job_id is taken from ps).  Care should thus be taken when
+merging jobs from localhost JobServers and from merging jobs from two different
+servers (which should instead be grouped together using a JobCache instance).</p>
+<p>other: another instance of JobServer.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="job_manager.JobServer.modify">
+<tt class="descname">modify</tt><big>(</big><em>job_spec</em>, <em>indices=None</em>, <em>pattern=None</em><big>)</big><a class="headerlink" href="#job_manager.JobServer.modify" title="Permalink to this definition">¶</a></dt>
+<dd><p>Modify a selected subset of jobs.</p>
+<p>indices: iterable containing indices of Job instances in the jobs
+list to delete.
+pattern: regular expression.  All jobs are tested (using re.search)
+against the pattern and matching jobs are modified.   Not used if None.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="job_manager.JobServer.select">
+<tt class="descname">select</tt><big>(</big><em>pattern</em><big>)</big><a class="headerlink" href="#job_manager.JobServer.select" title="Permalink to this definition">¶</a></dt>
+<dd><p>Select a subset of jobs from the server which match the supplied pattern.</p>
+<p>pattern: regular expression.  All jobs are tested (using re.search)
+against the pattern and the list of matching jobs is returned.  If pattern is
+None then all jobs are returned.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="job_manager.JobStatus">
+<em class="property">class </em><tt class="descclassname">job_manager.</tt><tt class="descname">JobStatus</tt><a class="headerlink" href="#job_manager.JobStatus" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>enum-esque class for specifying the status of a job.</p>
+<p>Defined statuses: held, queueing, running, finished, analysed.</p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="job_manager.LockException">
+<em class="property">exception </em><tt class="descclassname">job_manager.</tt><tt class="descname">LockException</tt><a class="headerlink" href="#job_manager.LockException" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">exceptions.Exception</span></tt></p>
+<p>Raised if a lock cannot be acquired.</p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="job_manager.UserError">
+<em class="property">exception </em><tt class="descclassname">job_manager.</tt><tt class="descname">UserError</tt><a class="headerlink" href="#job_manager.UserError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">exceptions.Exception</span></tt></p>
+<p>Raised due to an error from user-input.</p>
+</dd></dl>
+
+</div>
+
+
+      </div>
+      <div class="bottomnav">
+      
+        <p>
+        «&#160;&#160;<a href="jm.html">jm.py</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="license.html">License</a>&#160;&#160;»
+        </p>
+
+      </div>
+
+    <div class="footer">
+        &copy; Copyright 2011, James Spencer.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
+    </div>
+  </body>
+</html>
