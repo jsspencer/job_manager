@@ -6,7 +6,6 @@ _jm()
     local cur prev opts subcommand subcommands word job_desc REPLY JOBREPLY
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
-    prev="${COMP_WORDS[COMP_CWORD-2]}${COMP_WORDS[COMP_CWORD-1]}"
 
     subcommands_list=(add modify delete update daemon merge list)
     subcommands="add modify delete update daemon merge list"
@@ -22,6 +21,7 @@ _jm()
 
     case "${subcommand}" in
         add)
+            prev="${COMP_WORDS[COMP_CWORD-2]}${COMP_WORDS[COMP_CWORD-1]}"
             if [[ "${prev}" == "status:" ]]; then
                 COMPREPLY=($(compgen -W "unknown held queueing running finished analysed" -- ${cur}))
                 return 0
@@ -33,6 +33,7 @@ _jm()
             opts="${opts} --server ${job_desc}"
             ;;
         modify)
+            prev="${COMP_WORDS[COMP_CWORD-2]}${COMP_WORDS[COMP_CWORD-1]}"
             if [[ "${prev}" == "status:" ]]; then
                 COMPREPLY=($(compgen -W "unknown held queueing running finished analysed" -- ${cur}))
                 return 0
