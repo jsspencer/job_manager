@@ -1,0 +1,12 @@
+/*
+ * haiku-mod.css
+ * ~~~~~~~~~~~~~
+ *
+ * Just a simple addition to the builtin haiku theme to have option tables laid
+ * out without poor wrapping.  We wish to avoid having --option split over 2 lines.
+ *
+*/
+@import url("haiku.css");
+table.docutils td.option-group {
+    width: 150px;
+}
