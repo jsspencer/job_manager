@@ -21,7 +21,11 @@ _jm()
 
     case "${subcommand}" in
         add)
-            prev="${COMP_WORDS[COMP_CWORD-2]}${COMP_WORDS[COMP_CWORD-1]}"
+            if [[ ${#COMP_WORDS[@]} -ge 3 ]]; then
+                prev="${COMP_WORDS[COMP_CWORD-2]}${COMP_WORDS[COMP_CWORD-1]}"
+            else
+                prev="${COMP_WORDS[COMP_CWORD-1]}"
+            fi
             if [[ "${prev}" == "status:" ]]; then
                 COMPREPLY=($(compgen -W "unknown held queueing running finished analysed" -- ${cur}))
                 return 0
@@ -33,7 +37,11 @@ _jm()
             opts="${opts} --server ${job_desc}"
             ;;
         modify)
-            prev="${COMP_WORDS[COMP_CWORD-2]}${COMP_WORDS[COMP_CWORD-1]}"
+            if [[ ${#COMP_WORDS[@]} -ge 3 ]]; then
+                prev="${COMP_WORDS[COMP_CWORD-2]}${COMP_WORDS[COMP_CWORD-1]}"
+            else
+                prev="${COMP_WORDS[COMP_CWORD-1]}"
+            fi
             if [[ "${prev}" == "status:" ]]; then
                 COMPREPLY=($(compgen -W "unknown held queueing running finished analysed" -- ${cur}))
                 return 0
