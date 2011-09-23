@@ -484,9 +484,13 @@ For full usage, see top-level __doc__.
 
     while True:
         time.sleep(60)
-        job_cache.load()
-        job_cache.auto_update()
-        job_cache.dump()
+        try:
+            job_cache.load()
+            job_cache.auto_update()
+            job_cache.dump()
+        except job_manager.LockException:
+            # quietly skip this update if the cache is in use.
+            pass
 
 def update(options):
     '''Auto-update status of any queueing or running jobs.
