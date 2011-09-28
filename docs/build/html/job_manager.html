@@ -169,11 +169,12 @@ instance.</p>
 
 <dl class="method">
 <dt id="job_manager.JobCache.pretty_print">
-<tt class="descname">pretty_print</tt><big>(</big><em>hosts=None</em>, <em>pattern=None</em><big>)</big><a class="headerlink" href="#job_manager.JobCache.pretty_print" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">pretty_print</tt><big>(</big><em>hosts=None</em>, <em>pattern=None</em>, <em>short=False</em><big>)</big><a class="headerlink" href="#job_manager.JobCache.pretty_print" title="Permalink to this definition">¶</a></dt>
 <dd><p>Print out list of jobs.</p>
 <p>hosts: list of hostnames.  If specified, print out only jobs on the specified servers.
 pattern: regular expression.  Only jobs which match the supplied
-pattern are printed.  If pattern is None then all jobs are printed.</p>
+pattern are printed.  If pattern is None then all jobs are printed.
+short: print just the hostname, index, job_id and status.</p>
 </dd></dl>
 
 </dd></dl>
@@ -287,7 +288,7 @@ None then all jobs are returned.</p>
 
     <div class="footer">
         &copy; Copyright 2011, James Spencer.
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.4.
     </div>
   </body>
 </html>

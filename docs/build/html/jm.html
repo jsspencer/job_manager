@@ -58,7 +58,7 @@ jm.py modify <span class="o">[</span>-c | --cache<span class="o">]</span> <span 
 
 jm.py delete <span class="o">[</span>-c | --cache<span class="o">]</span> <span class="o">[</span>-s | --server<span class="o">]</span> <span class="o">[</span>-i | --index<span class="o">]</span> <span class="o">[</span>-p | --pattern<span class="o">]</span>
 
-jm.py list <span class="o">[</span>-c | --cache<span class="o">]</span> <span class="o">[</span>-s | --server<span class="o">]</span> <span class="o">[</span>-p | --pattern<span class="o">]</span>
+jm.py list <span class="o">[</span>-c | --cache<span class="o">]</span> <span class="o">[</span>-s | --server<span class="o">]</span> <span class="o">[</span>-p | --pattern<span class="o">]</span> <span class="o">[</span>-t | --terse<span class="o">]</span>
 
 jm.py merge <span class="o">[</span>-c | --cache<span class="o">]</span> &lt;<span class="o">[[</span>user@<span class="o">]</span>remote_host:<span class="o">]</span>remote_cache&gt; <span class="o">[</span>remote_hostname<span class="o">]</span>
 
@@ -170,6 +170,9 @@ multiple times in order to select multiple jobs.</td></tr>
 regular expression is tested against all fields in the job description for
 each job and a job is selected if any of the fields match the regular
 expression.</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">-t</span>, <span class="option">--terse</span></kbd></td>
+<td>Print only the hostname, index, job id and status of each job.</td></tr>
 </tbody>
 </table>
 </div>
@@ -238,7 +241,7 @@ suggestions for improvements or code contributions.</p>
 
     <div class="footer">
         &copy; Copyright 2011, James Spencer.
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.4.
     </div>
   </body>
 </html>

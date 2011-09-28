@@ -1,4 +1,4 @@
-.TH "JM.PY" "1" "September 06, 2011" "0.1" "Job Manager"
+.TH "JM.PY" "1" "September 28, 2011" "0.1" "Job Manager"
 .SH NAME
 jm.py \- job manager command-line interface
 .
@@ -40,7 +40,7 @@ jm.py modify [\-c | \-\-cache] [\-s | \-\-server] [\-i | \-\-index] [\-p | \-\-p
 
 jm.py delete [\-c | \-\-cache] [\-s | \-\-server] [\-i | \-\-index] [\-p | \-\-pattern]
 
-jm.py list [\-c | \-\-cache] [\-s | \-\-server] [\-p | \-\-pattern]
+jm.py list [\-c | \-\-cache] [\-s | \-\-server] [\-p | \-\-pattern] [\-t | \-\-terse]
 
 jm.py merge [\-c | \-\-cache] <[[user@]remote_host:]remote_cache> [remote_hostname]
 
@@ -66,33 +66,40 @@ merged together, including caches on remote servers directly over ssh.
 .INDENT 0.0
 .TP
 .B add
+.
 Add a job running on the specified server with job details given by job
 description.
 .TP
 .B modify
+.
 Modify the selected job(s) according to the job description fields
 supplied.  Note that if neither a pattern nor an index is provided then no
 job is selected to be modified.
 .TP
 .B delete
+.
 Delete the specified jobs.  Note that if neither a pattern nor an index is
 provided then no job is selected to be modified.
 .TP
 .B list
+.
 List jobs which match the supplied search criteria.  The complete list of
 jobs is printed out if no options are specified.  Only fields of the job
 description which are not null are printed out.
 .TP
 .B merge
+.
 Merge jobs from the remote_cache file into the current cache.
 .TP
 .B update
+.
 Check all jobs on the \fIlocalhost\fP server and update the status of queueing
 or running jobs if they have started running or finished.  The job status
 is checked by searching for the \fIjob_id\fP using ps, qstat (for PBS\-based
 queueing systems) and llq (for LoadLeveler queueing systems).
 .TP
 .B daemon
+.
 Run the update command once a minute.  Designed to be run in the background
 as a daemon\-type process.
 .UNINDENT
@@ -107,6 +114,7 @@ Available elements of the job description are:
 .INDENT 0.0
 .TP
 .B job_id
+.
 ID of the job.  This ought to be unique and in order to work with the
 update and daemon commands should identiy the job by either being the pid
 of the job (for jobs running interactively) or the ID of the job in the
@@ -114,26 +122,33 @@ queueing system.  This value is most conveniently obtained from the
 environment or a queueing system environment variable.
 .TP
 .B path
+.
 Path to the directory in which the job is running.
 .TP
 .B program
+.
 Name of the program being executed.
 .TP
 .B input_fname
+.
 Filename of the input file.
 .TP
 .B output_fname
+.
 Filename of the output file.
 .TP
 .B status
+.
 status of job.  Available values are: unknown, held, queueing, running,
 finished and analysed.  Default: unknown.
 .TP
 .B submit
+.
 File name of the submit script used.  Only relevant for jobs run on
 clusters with queueing systems.
 .TP
 .B comment
+.
 Comment and notes on the job.
 .UNINDENT
 .sp
@@ -144,25 +159,33 @@ A job must have a \fIjob_id\fP, \fIpath\fP and \fIprogram\fP specified.  Other a
 .INDENT 0.0
 .TP
 .B \-c,  \-\-cache
+.
 Specify the location of the cache file containing data from previous runs.
 The default is $HOME/.cache/jm/jm.cache.  The directory structure for the
 cache file will be created if necessary.
 .TP
 .B \-s,  \-\-server
+.
 Specify the server of the job.  The default is the \fIlocalhost\fP server
 except for the \fBlist\fP command, where the default is all servers.  Can be
 specified multiple times, in which case the command is applied to each
 server in turn.  However, this rarely makes sense for the \fBadd\fP command.
 .TP
 .B \-i,  \-\-index
+.
 Select a job by its index on the specified server(s).  Can be specified
 multiple times in order to select multiple jobs.
 .TP
 .B \-p,  \-\-pattern
+.
 Select a job by a given regular expression on the specified server(s).  The
 regular expression is tested against all fields in the job description for
 each job and a job is selected if any of the fields match the regular
 expression.
+.TP
+.B \-t,  \-\-terse
+.
+Print only the hostname, index, job id and status of each job.
 .UNINDENT
 .SH EXAMPLES
 .sp
