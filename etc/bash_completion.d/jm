@@ -62,7 +62,7 @@ _jm()
         merge)
             ;;
         list)
-            opts="${opts} --server --pattern"
+            opts="${opts} --server --pattern --terse"
             ;;
         *)
             opts="${subcommands} ${opts}"

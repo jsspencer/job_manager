@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 '''
 Synopsis
 --------
@@ -11,7 +11,7 @@ Synopsis
 
     jm.py delete [-c | --cache] [-s | --server] [-i | --index] [-p | --pattern]
 
-    jm.py list [-c | --cache] [-s | --server] [-p | --pattern]
+    jm.py list [-c | --cache] [-s | --server] [-p | --pattern] [-t | --terse]
 
     jm.py merge [-c | --cache] <[[user@]remote_host:]remote_cache> [remote_hostname]
 
@@ -119,6 +119,8 @@ Options
     regular expression is tested against all fields in the job description for
     each job and a job is selected if any of the fields match the regular
     expression.
+-t, --terse
+    Print only the hostname, index, job id and status of each job.
 
 .. _examples:
 
@@ -320,28 +322,41 @@ options: an optparse.Values instance containing the set options.
 For full usage, see top-level __doc__.
 '''
 
-    parser = optparse.OptionParser(usage='''
+    usage = '''
 %prog add [-c | --cache] [-s | --server] <job_description>
 %prog modify [-c | --cache] [-s | --server] [-i | --index] [-p | --pattern] <job_description>
 %prog delete [-c | --cache] [-s | --server] [-i | --index] [-p | --pattern]
-%prog list [-c | --cache] [-s | --server] [-p | --pattern]
+%prog list [-c | --cache] [-s | --server] [-p | --pattern] [-s | --terse]
 %prog merge [-c | --cache] <[[user@]remote_host:]remote_cache> [remote_hostname]
 %prog update [-c | --cache]
-%prog daemon [-c | --cache]''',
-                                   description='''Manage and manipulate a set of jobs.
+%prog daemon [-c | --cache]'''
+    description = '''Manage and manipulate a set of jobs.
 Options that are not relevant to a command are ignored.  See the man page for
-more details.''',
-                                   epilog='''A job_description consists of
+more details.'''
+    epilog='''A job_description consists of
 a series of key: value pairs.  Available keys are job_id, program, path,
 input_fname, output_fname, status, submit and comment.  Allowed status values
 are unknown, held, queueing, running, finished and analysed.  Only job_id,
 program and path are required to add a job and only the attributes to be
 changed are required when modify a job.  Unused attributes are set to null
-values.''')
+values.'''
+    if sys.version_info[:2] >= (2, 5):
+        # have epilog
+        parser = optparse.OptionParser(
+                                       usage=usage,
+                                       description=description,
+                                       epilog=epilog,
+                                      )
+    else:
+        parser = optparse.OptionParser(
+                                       usage=usage,
+                                       description=description,
+                                      )
     parser.add_option('-c', '--cache', default='~/.cache/jm/jm.cache', help='file containing stored job data.  Default: %default.')
     parser.add_option('-i', '--index', default=[], action='append', type='int', help='index of desired calculation on the server.  Can be specified multiple times to select multiple jobs.')
     parser.add_option('-s', '--server', default=[], action='append', help='servers of the job.  Can be specified multiple times to select more than one server.  Default: all servers (list command) or localhost (otherwise).')
     parser.add_option('-p', '--pattern', help='Select a job by a given regular expression on the specified server(s).')
+    parser.add_option('-t', '--terse', action="store_true", default=False, help="Print only minimal information.")
 
     (options, args) = parser.parse_args(args)
 
@@ -421,7 +436,7 @@ For full usage, see top-level __doc__.
 '''
 
     job_cache = job_manager.JobCache(options.cache, load=True)
-    job_cache.pretty_print(options.server, options.pattern)
+    job_cache.pretty_print(options.server, options.pattern, options.terse)
     job_cache.dump()
 
 def merge(options):

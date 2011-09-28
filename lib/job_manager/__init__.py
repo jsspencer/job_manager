@@ -449,12 +449,13 @@ instance.
         # undo local modification to localhost on the other cache.
         other.job_servers['localhost'].hostname = 'localhost'
 
-    def pretty_print(self, hosts=None, pattern=None):
+    def pretty_print(self, hosts=None, pattern=None, short=False):
         '''Print out list of jobs.
 
 hosts: list of hostnames.  If specified, print out only jobs on the specified servers.
 pattern: regular expression.  Only jobs which match the supplied
 pattern are printed.  If pattern is None then all jobs are printed.
+short: print just the hostname, index, job_id and status.
 '''
         selected_jobs = {}
         for (host, job_server) in self.job_servers.iteritems():
@@ -476,8 +477,10 @@ pattern are printed.  If pattern is None then all jobs are printed.
                     used[attr] = used[attr] or val
 
         # don't output unused fields
+        # remove 'long' fields if requested
         for (attr, val) in used.iteritems():
-            if attr not in ['hostname', 'index'] and not val:
+            if (attr not in ['hostname', 'index'] and not val) or \
+               (short and attr not in ['hostname', 'index', 'job_id', 'status']):
                 attrs.remove(attr)
                 lengths.pop(attr)
 
