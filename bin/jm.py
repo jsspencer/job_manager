@@ -52,7 +52,11 @@ list
     jobs is printed out if no options are specified.  Only fields of the job
     description which are not null are printed out.
 merge
-    Merge jobs from the remote_cache file into the current cache.
+    Merge jobs from the remote_cache file into the current cache.  The remote
+    hostname nickname must be specified if the remote cache is actually a local
+    file.  If remote_hostname is not given and the remote_cache is on a remote
+    machine, then the hostname in the address is used as the remote_hostname
+    parameter.
 update
     Check all jobs on the *localhost* server and update the status of queueing
     or running jobs if they have started running or finished.  The job status
@@ -162,7 +166,14 @@ Merge jobs from a remote server into the local job cache:
 
 .. code-block:: bash
 
-    $ jm.py merge user@remote_server_fqdn:/path/to/remote_cache remote_server
+    $ jm.py merge user@remote_server_fqdn:/path/to/remote_cache remote_server_name
+
+.. note::
+
+    The remote file is transferred by scp and requires password-free access to
+    the remote server (e.g. by using ssh keys and ssh-agent).  If this is not
+    possible, copy the remote cache to the local machine and then merge using
+    the local copy.
 
 List a subset of jobs.
 
@@ -186,7 +197,7 @@ Modified BSD License.  Please see the source files for more information.
 Bugs
 ----
 
-Contact James Spencer (james.s.spencer@gmail.com) regarding bug reports,
+Contact James Spencer (j.spencer@imperial.ac.uk) regarding bug reports,
 suggestions for improvements or code contributions.
 '''
 
@@ -218,16 +229,10 @@ import job_manager
 import optparse
 import os
 import re
+import subprocess
 import sys
 import tempfile
 import time
-
-# optional paramiko functionality
-try:
-    import paramiko
-    HAVE_PARAMIKO = True
-except ImportError:
-    HAVE_PARAMIKO = False
 
 ### parsers ###
 
@@ -450,31 +455,20 @@ For full usage, see top-level __doc__.
     tmp_cache = None
     if re.match('.*?(.*?):', options.remote_cache):
         # a cache on a remote server has been provided
-        if HAVE_PARAMIKO:
-            ssh = paramiko.SSHClient()
-            ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-            remotem = re.match('(.*?)@(.*?):(.*)', options.remote_cache) 
-            if remotem:
-                user = remotem.group(1)
-                host = remotem.group(2)
-                remote_file = remotem.group(3)
-                ssh.connect(host, username=user)
-            else:
-                remotem = re.match('(.*?):(.*)', options.remote_cache) 
-                host = remotem.group(1)
-                remote_file = remotem.group(2)
-                ssh.connect(host)
-            if not options.remote_server:
-                options.remote_server = host
-            sftp = ssh.open_sftp()
-            tmp_cache = tempfile.NamedTemporaryFile(delete=False)
-            tmp_cache.close()
-            options.remote_cache = tmp_cache.name
-            sftp.get(remote_file, options.remote_cache)
-            sftp.close()
-            ssh.close()
-        else:
-            raise job_manager.UserError('Cannot obtain remote cache files without paramiko installed.')
+        tmp_cache = tempfile.NamedTemporaryFile(delete=False)
+        tmp_cache.close()
+        scp_proc = subprocess.Popen(['scp',options.remote_cache,tmp_cache.name], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        (out,err) = scp_proc.communicate()
+        if scp_proc.returncode != 0:
+            raise job_manager.UserError('scp returned: %i.  Error: %s' % (scp_proc.returncode, err))
+        if not options.remote_server:
+            options.remote_server = options.remote_cache.split('@')[-1].split(':')[0]
+        options.remote_cache = tmp_cache.name
+    else:
+        remote_cache = options.remote_cache
+
+    if not options.remote_server:
+        raise job_manager.UserError('No remote_server specified.')
 
     job_cache = job_manager.JobCache(options.cache, load=True)
     job_cache_remote = job_manager.JobCache(options.remote_cache, load=True)
