@@ -1,4 +1,4 @@
-.TH "JM.PY" "1" "September 28, 2011" "0.1" "Job Manager"
+.TH "JM.PY" "1" "December 07, 2011" "0.1" "Job Manager"
 .SH NAME
 jm.py \- job manager command-line interface
 .
@@ -89,7 +89,11 @@ description which are not null are printed out.
 .TP
 .B merge
 .
-Merge jobs from the remote_cache file into the current cache.
+Merge jobs from the remote_cache file into the current cache.  The remote
+hostname nickname must be specified if the remote cache is actually a local
+file.  If remote_hostname is not given and the remote_cache is on a remote
+machine, then the hostname in the address is used as the remote_hostname
+parameter.
 .TP
 .B update
 .
@@ -234,9 +238,16 @@ Merge jobs from a remote server into the local job cache:
 .sp
 .nf
 .ft C
-$ jm.py merge user@remote_server_fqdn:/path/to/remote_cache remote_server
+$ jm.py merge user@remote_server_fqdn:/path/to/remote_cache remote_server_name
 .ft P
 .fi
+.IP Note
+.
+The remote file is transferred by scp and requires password\-free access to
+the remote server (e.g. by using ssh keys and ssh\-agent).  If this is not
+possible, copy the remote cache to the local machine and then merge using
+the local copy.
+.RE
 .sp
 List a subset of jobs.
 .sp
@@ -260,7 +271,7 @@ The jm.py script and the job_manager python module are distributed under the
 Modified BSD License.  Please see the source files for more information.
 .SH BUGS
 .sp
-Contact James Spencer (\fI\%james.s.spencer@gmail.com\fP) regarding bug reports,
+Contact James Spencer (\fI\%j.spencer@imperial.ac.uk\fP) regarding bug reports,
 suggestions for improvements or code contributions.
 .SH AUTHOR
 James Spencer

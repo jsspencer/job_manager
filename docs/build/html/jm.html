@@ -98,7 +98,11 @@ provided then no job is selected to be modified.</dd>
 jobs is printed out if no options are specified.  Only fields of the job
 description which are not null are printed out.</dd>
 <dt>merge</dt>
-<dd>Merge jobs from the remote_cache file into the current cache.</dd>
+<dd>Merge jobs from the remote_cache file into the current cache.  The remote
+hostname nickname must be specified if the remote cache is actually a local
+file.  If remote_hostname is not given and the remote_cache is on a remote
+machine, then the hostname in the address is used as the remote_hostname
+parameter.</dd>
 <dt>update</dt>
 <dd>Check all jobs on the <em>localhost</em> server and update the status of queueing
 or running jobs if they have started running or finished.  The job status
@@ -200,8 +204,15 @@ a minute using a non-default cache file.</p>
 </pre></div>
 </div>
 <p>Merge jobs from a remote server into the local job cache:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span class="nv">$ </span>jm.py merge user@remote_server_fqdn:/path/to/remote_cache remote_server
+<div class="highlight-bash"><div class="highlight"><pre><span class="nv">$ </span>jm.py merge user@remote_server_fqdn:/path/to/remote_cache remote_server_name
 </pre></div>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">The remote file is transferred by scp and requires password-free access to
+the remote server (e.g. by using ssh keys and ssh-agent).  If this is not
+possible, copy the remote cache to the local machine and then merge using
+the local copy.</p>
 </div>
 <p>List a subset of jobs.</p>
 <div class="highlight-bash"><div class="highlight"><pre><span class="nv">$ </span>jm.py list --server remote_server
@@ -220,7 +231,7 @@ Modified BSD License.  Please see the source files for more information.</p>
 </div>
 <div class="section" id="bugs">
 <h2>Bugs<a class="headerlink" href="#bugs" title="Permalink to this headline">¶</a></h2>
-<p>Contact James Spencer (<a class="reference external" href="mailto:james&#46;s&#46;spencer&#37;&#52;&#48;gmail&#46;com">james<span>&#46;</span>s<span>&#46;</span>spencer<span>&#64;</span>gmail<span>&#46;</span>com</a>) regarding bug reports,
+<p>Contact James Spencer (<a class="reference external" href="mailto:j&#46;spencer&#37;&#52;&#48;imperial&#46;ac&#46;uk">j<span>&#46;</span>spencer<span>&#64;</span>imperial<span>&#46;</span>ac<span>&#46;</span>uk</a>) regarding bug reports,
 suggestions for improvements or code contributions.</p>
 </div>
 </div>
@@ -241,7 +252,7 @@ suggestions for improvements or code contributions.</p>
 
     <div class="footer">
         &copy; Copyright 2011, James Spencer.
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.4.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.8.
     </div>
   </body>
 </html>
