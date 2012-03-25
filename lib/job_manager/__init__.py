@@ -245,7 +245,7 @@ Only performed on the localhost JobServer.  See also Job.auto_update.
             for job in self.jobs:
                 job.auto_update()
         else:
-            print 'Not auto-updating jobs on host %s' % (self.hostname)
+            print('Not auto-updating jobs on host %s' % (self.hostname))
 
     def select(self, pattern):
         '''Select a subset of jobs from the server which match the supplied pattern.
@@ -490,8 +490,8 @@ short: print just the hostname, index, job_id and status.
             fmt = ''
             for attr in attrs:
                 fmt = '%s%%(%s)-%is  ' % (fmt, attr, lengths[attr])
-            print fmt % dict((attr, attr) for attr in attrs)
-            print fmt % dict((attr, '-'*lengths[attr]) for attr in attrs)
+            print(fmt % dict((attr, attr) for attr in attrs))
+            print(fmt % dict((attr, '-'*lengths[attr]) for attr in attrs))
             for (host, jobs) in selected_jobs.iteritems():
                 for job in jobs:
                     output_dict = job.job_spec()
@@ -499,4 +499,4 @@ short: print just the hostname, index, job_id and status.
                         ('hostname', host),
                         ('index', self.job_servers[host].jobs.index(job))
                     ))
-                    print fmt % output_dict
+                    print(fmt % output_dict)
