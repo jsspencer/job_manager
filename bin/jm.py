@@ -201,7 +201,7 @@ Contact James Spencer (j.spencer@imperial.ac.uk) regarding bug reports,
 suggestions for improvements or code contributions.
 '''
 
-# Copyright (c) 2011, James Spencer. All rights reserved.
+# Copyright (c) 2011-2012, James Spencer. All rights reserved.
 # 
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
