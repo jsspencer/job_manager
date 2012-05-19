@@ -12,7 +12,7 @@ interface, ``jm.py`` is provided which exposes most functionaility of
 ``job_manager`` for everyday use.
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
 
    install
    jm
@@ -23,6 +23,4 @@ Indices and tables
 ==================
 
 * :ref:`genindex`
-* :ref:`modindex`
 * :ref:`search`
-
