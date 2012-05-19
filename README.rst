@@ -15,7 +15,7 @@ Documentation
 -------------
 
 Full documentation can be found in the ``docs/`` subdirectory and in the
-appropriate docstrings.  Documentation can be compiled using :ref:`sphinx
+appropriate docstrings.  Documentation can be compiled using `sphinx
 <http://sphinx.pocoo.org/>`_.  The html and man builds are included in the
 ``docs/build/`` subdirectory.
 
