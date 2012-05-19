@@ -20,7 +20,7 @@ appropriate docstrings.  Documentation can be compiled using `sphinx
 ``docs/build/`` subdirectory.
 
 Documentation can also be viewed at `readthedocs
-<job_manager.readthedocs.org>`_.
+<http://job_manager.readthedocs.org>`_.
 
 Author
 ------
