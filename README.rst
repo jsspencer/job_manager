@@ -19,6 +19,9 @@ appropriate docstrings.  Documentation can be compiled using `sphinx
 <http://sphinx.pocoo.org/>`_.  The html and man builds are included in the
 ``docs/build/`` subdirectory.
 
+Documentation can also be viewed at `readthedocs
+<job_manager.readthedocs.org>`_.
+
 Author
 ------
 
