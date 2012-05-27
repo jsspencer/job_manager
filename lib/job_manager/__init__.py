@@ -240,7 +240,7 @@ class JobServer:
 
 .. attribute:: jobs
 
-    list of :class:`Jobs` running on the server.
+    list of :class:`Job` instances which are running on the server.
 '''
     def __init__(self, hostname='localhost'):
         self.hostname = hostname
