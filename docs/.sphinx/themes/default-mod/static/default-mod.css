@@ -1,0 +1,12 @@
+/*
+ * default-mod.css
+ * ~~~~~~~~~~~~~
+ *
+ * Just a simple addition to the default theme to have option tables laid out
+ * without poor wrapping.  We wish to avoid having --option split over 2 lines.
+ *
+*/
+@import url("default.css");
+table.docutils td.option-group {
+    min-width: 6em;
+}

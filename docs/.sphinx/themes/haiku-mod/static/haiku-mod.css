@@ -8,5 +8,5 @@
 */
 @import url("haiku.css");
 table.docutils td.option-group {
-    width: 150px;
+    min-width: 6em;
 }
