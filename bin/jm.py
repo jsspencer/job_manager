@@ -225,7 +225,6 @@ suggestions for improvements or code contributions.
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import job_manager
 import optparse
 import os
 import re
@@ -233,6 +232,14 @@ import subprocess
 import sys
 import tempfile
 import time
+try:
+    import job_manager
+except ImportError:
+    # Assume standard layout of source package.
+    SCRIPT_DIR = os.path.abspath(os.path.dirname(sys.argv[0]))
+    JM_LIB_DIR = os.path.abspath(os.path.join(SCRIPT_DIR, '../lib'))
+    sys.path.extend([JM_LIB_DIR])
+    import job_manager
 
 ### parsers ###
 
