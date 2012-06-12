@@ -190,7 +190,7 @@ Only jobs which are currently held, queueing or running are updated.
     changed.  Keys with null values are ignored.  See output from
     :meth:`job_spec` for an example format.
 '''
-        for (attr, val) in job_spec.iteritems():
+        for (attr, val) in job_spec.items():
             if val:
                 setattr(self, attr, val)
         self._timestamp = time.gmtime()
@@ -474,7 +474,7 @@ with other_hostname to avoid unintended nameclashes.
 '''
         # treat localhost separately---want to save it to a different name.
         other.job_servers['localhost'].hostname = other_hostname
-        for job_server in other.job_servers.itervalues():
+        for job_server in other.job_servers.values():
             if job_server.hostname in self.job_servers:
                 # have already got a job_server of the same name.
                 self.job_servers[job_server.hostname].merge(job_server)
@@ -495,7 +495,7 @@ with other_hostname to avoid unintended nameclashes.
 :param boolean short: print just the hostname, index, job_id and status.
 '''
         selected_jobs = {}
-        for (host, job_server) in self.job_servers.iteritems():
+        for (host, job_server) in self.job_servers.items():
             if not hosts or job_server.hostname in hosts:
                 selected_jobs[host] = job_server.select(pattern)
                 # store only servers with jobs matching the pattern
@@ -506,16 +506,16 @@ with other_hostname to avoid unintended nameclashes.
         attrs = ['hostname', 'index', 'job_id', 'program', 'path', 'input_fname', 'output_fname', 'submit', 'status', 'comment']
         lengths = dict((attr, len(attr)) for attr in attrs)
         used = dict((attr, None) for attr in attrs)
-        for (host, jobs) in selected_jobs.iteritems():
+        for (host, jobs) in selected_jobs.items():
             lengths['hostname'] = max(lengths['hostname'], len(host))
             for job in jobs:
-                for (attr, val) in job.job_spec().iteritems():
+                for (attr, val) in job.job_spec().items():
                     lengths[attr] = max(lengths[attr], len(str(val)))
                     used[attr] = used[attr] or val
 
         # don't output unused fields
         # remove 'long' fields if requested
-        for (attr, val) in used.iteritems():
+        for (attr, val) in used.items():
             if (attr not in ['hostname', 'index'] and not val) or \
                (short and attr not in ['hostname', 'index', 'job_id', 'status']):
                 attrs.remove(attr)
@@ -529,7 +529,7 @@ with other_hostname to avoid unintended nameclashes.
                 fmt = '%s%%(%s)-%is  ' % (fmt, attr, lengths[attr])
             print(fmt % dict((attr, attr) for attr in attrs))
             print(fmt % dict((attr, '-'*lengths[attr]) for attr in attrs))
-            for (host, jobs) in selected_jobs.iteritems():
+            for (host, jobs) in selected_jobs.items():
                 for job in jobs:
                     output_dict = job.job_spec()
                     output_dict.update((
