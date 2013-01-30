@@ -338,7 +338,7 @@ For full usage, see top-level __doc__.
 %prog add [-c | --cache] [-s | --server] <job_description>
 %prog modify [-c | --cache] [-s | --server] [-i | --index] [-p | --pattern] <job_description>
 %prog delete [-c | --cache] [-s | --server] [-i | --index] [-p | --pattern]
-%prog list [-c | --cache] [-s | --server] [-p | --pattern] [-s | --terse]
+%prog list [-c | --cache] [-s | --server] [-p | --pattern] [-t | --terse]
 %prog merge [-c | --cache] <[[user@]remote_host:]remote_cache> [remote_hostname]
 %prog update [-c | --cache]
 %prog daemon [-c | --cache]'''
