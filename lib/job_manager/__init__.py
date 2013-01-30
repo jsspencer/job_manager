@@ -389,7 +389,7 @@ By default a new (empty) :class:`JobServer` instance is created on localhost.
     def __repr__(self):
         return (self.cache, self._lock, self._has_lock, self.job_servers).__repr__()
 
-    def _acquire_lock(self):
+    def _acquire_lock(self, max_attempts=30):
         '''Acquire a lock on the cache file.
 
 Write the pid of the current instance to the lock file, which is only possible
@@ -397,16 +397,20 @@ if the lock file doesn't already exist.  Manipulating the job cache must be
 atomic in order to avoid race conditions, so one should always acquire the lock
 when loading data from the cache file.
 '''
-        if os.path.exists(self._lock):
-            lock_file = open(self._lock)
-            pid = lock_file.read().strip()
-            lock_file.close()
-            raise LockException('Cannot obtain lock file: %s; lock held by process: %s.' % (self._lock, pid))
-        else:
-            lock_file = open(self._lock, 'w')
-            lock_file.write('%i' % os.getpid())
-            lock_file.close()
-            self._has_lock = True
+        for i in range(max_attempts):
+            if os.path.exists(self._lock):
+                lock_file = open(self._lock)
+                pid = lock_file.read().strip()
+                lock_file.close()
+                time.sleep(1)
+            else:
+                lock_file = open(self._lock, 'w')
+                lock_file.write('%i' % os.getpid())
+                lock_file.close()
+                self._has_lock = True
+                break
+        if not self._has_lock:
+            raise LockException('Cannot obtain lock file after %s attempts: %s; lock held by process: %s.' % (max_attempts, self._lock, pid))
 
     def _release_lock(self):
         '''Release the lock on the cache file.
