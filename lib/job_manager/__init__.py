@@ -151,12 +151,12 @@ Only jobs which are currently held, queueing or running are updated.
 
         if self.status in (JobStatus.unknown, JobStatus.held, JobStatus.queueing, JobStatus.running):
 
+            found_job = False
             for queue in queues:
                 try:
                     queue_popen = subprocess.Popen(queue['command'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                     output = queue_popen.communicate()[0]
                     if queue_popen.returncode == 0:
-                        found_job = False
                         for line in output.splitlines():
                             job_id = line.split()[queue['job_column']]
                             stat = line.split()[queue['status_column']]
@@ -174,13 +174,13 @@ Only jobs which are currently held, queueing or running are updated.
                                     self.status = JobStatus.running
                                 self._timestamp = time.gmtime()
                                 break
-                        if not found_job:
-                            # Couldn't find job, assume it has finished.
-                            self.status = JobStatus.finished
-                            self._timestamp = time.gmtime()
                 except OSError:
                     # command doesn't exists on this server---skip.
                     pass
+            if not found_job:
+                # Couldn't find job, assume it has finished.
+                self.status = JobStatus.finished
+                self._timestamp = time.gmtime()
 
     def modify(self, job_spec):
         '''Modify the job description.
