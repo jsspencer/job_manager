@@ -431,7 +431,9 @@ instance on the localhost.
 '''
         if not self._has_lock:
             self._acquire_lock()
-        pickle.dump(self.job_servers, open(self.cache, 'wb'))
+        cache_f = open(self.cache, 'wb')
+        pickle.dump(self.job_servers, cache_f)
+        cache_f.close()
         self.job_servers = dict(localhost=JobServer())
         self._release_lock()
 
@@ -441,7 +443,9 @@ instance on the localhost.
 Also acquires the lock.'''
         self._acquire_lock()
         if os.path.exists(self.cache):
-            self.job_servers = pickle.load(open(self.cache))
+            cache_f = open(self.cache, 'rb')
+            self.job_servers = pickle.load(cache_f)
+            cache_f.close()
 
     def add_server(self, hostname):
         '''Add a new :class:`JobServer` instance.
